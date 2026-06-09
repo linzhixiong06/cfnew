@@ -8,28 +8,50 @@ on:
       - '少年你相信光吗'
   workflow_dispatch:
 
+  # 🌟 新增：定时任务（每 6 小时自动检测并同步一次原作者的仓库）
+  schedule:
+    - cron: '0 */6 * * *'
+
 jobs:
+  # 🌟 新增任务：自动检查并同步原作者最新的代码
+  sync-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync Upstream
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.repos.mergeUpstream({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                branch: 'main'
+              });
+              console.log('自动同步上游成功！');
+            } catch (error) {
+              console.log('目前已是最新，无需同步，或者暂无更新。');
+            }
+
   deploy:
     runs-on: ubuntu-latest
+    # 🌟 确保先执行上面的自动同步，然后再看要不要部署
+    needs: sync-upstream
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # 1. 强行同步最新云端文件
       - name: Pull latest changes
         run: |
           git config --global user.name 'GitHub Actions Bot'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git pull origin main
 
-      # 2. 🌟 核心绕坑：将无后缀的中文文件现场复制一份为标准的 worker.js，规避所有路径 Bug
       - name: Prepare Standard Script File
         run: |
           cp "少年你相信光吗" worker.js
 
-      # 3. 🌟 核心绕坑：不再使用脆弱的官方 Action，直接用 Node 运行纯原生 Wrangler 命令部署
       - name: Deploy via Raw Wrangler Command
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
