@@ -24,18 +24,15 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git pull origin main
 
-      # 2. 🌟 核心修复：现场印制符合它底层死理的 wrangler.toml 配置文件
-      - name: Create Custom Wrangler Config
+      # 2. 🌟 核心绕坑：将无后缀的中文文件现场复制一份为标准的 worker.js，规避所有路径 Bug
+      - name: Prepare Standard Script File
         run: |
-          cat > wrangler.toml << 'EOF'
-          name = "wx"
-          main = "少年你相信光吗"
-          compatibility_date = "2026-01-20"
-          EOF
+          cp "少年你相信光吗" worker.js
 
-      # 3. 🌟 核心修复：命令留空，让 wrangler 自动去读取上面刚做好的配置文件，不给它迷路的机会
-      - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # 3. 🌟 核心绕坑：不再使用脆弱的官方 Action，直接用 Node 运行纯原生 Wrangler 命令部署
+      - name: Deploy via Raw Wrangler Command
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler deploy worker.js --name=wx --compatibility-date=2026-01-20
