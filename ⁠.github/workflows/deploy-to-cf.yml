@@ -1,0 +1,33 @@
+name: Auto Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '少年你相信光吗'  # 只有当这个混淆后的文件发生变动时，才触发部署
+  workflow_dispatch:      # 允许你手动点击触发
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 动态生成专属于你自己的 wrangler.toml，原作者怎么更新都覆盖不了它！
+      - name: Create Custom Wrangler Config
+        run: |
+          cat > wrangler.toml << 'EOF'
+          name = "wx"
+          main = "少年你相信光吗"
+          compatibility_date = "2026-01-20"
+          EOF
+
+      # 执行部署到你的 Cloudflare Account
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
