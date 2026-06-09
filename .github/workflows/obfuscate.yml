@@ -107,11 +107,4 @@ jobs:
             git push
           fi
 
-      # 🌟 这是新加入的步骤：自动同步部署到你的 Cloudflare Worker
-      - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
-
+      
