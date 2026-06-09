@@ -14,18 +14,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 确保获取完整的 Git 历史以便顺利拉取最新提交
 
-      - name: Create Custom Wrangler Config
+      # 🌟 核心修复：强行从你的云端仓库同步拉取刚刚混淆好的最新文件
+      - name: Pull latest changes
         run: |
-          cat > wrangler.toml << 'EOF'
-          name = "wx"
-          main = "少年你相信光吗"
-          compatibility_date = "2026-01-20"
-          EOF
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git pull origin main
 
+      # 直接使用纯参数一脚踢入 Cloudflare
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+          command: deploy 少年你相信光吗 --name=wx --compatibility-date=2026-01-20
